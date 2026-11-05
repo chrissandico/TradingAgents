@@ -38,31 +38,27 @@ instead of force-pushing.
 cd ~/workspace/tradingagents
 python3 -m venv .venv && source .venv/bin/activate   # Python 3.11+ (3.13 upstream-recommended)
 pip install .
-cp .env.example .env    # then set the key for ONE provider
 ```
 
-Default sim provider in `.env` (cheap test tier, Anthropic):
+The Anthropic key is NOT in `.env`. It lives in the Secure Vault under the
+`custom.anthropic-tradingagents` connector (a dedicated key named
+ANTHROPIC_API_KEY_TRADINGAGENTS_SIM), and `sim/run.py` fetches a
+short-lived surrogate for it at launch. The real key never touches disk.
+Defaults set by the launcher (cheap test tier): provider anthropic,
+deep claude-sonnet-5, quick claude-haiku-5-5, 1 debate + 1 risk round.
 
-```
-ANTHROPIC_API_KEY=<your key — never commit .env>
-TRADINGAGENTS_LLM_PROVIDER=anthropic
-TRADINGAGENTS_DEEP_THINK_LLM=claude-sonnet-5
-TRADINGAGENTS_QUICK_THINK_LLM=claude-haiku-4-5
-TRADINGAGENTS_MAX_DEBATE_ROUNDS=1
-TRADINGAGENTS_MAX_RISK_ROUNDS=1
-```
-
-Any other provider works the same way (OpenAI, Google, DeepSeek, Ollama…);
-see `.env.example`.
+Any other provider works via `.env` the upstream way (OpenAI, Google,
+DeepSeek, Ollama…); see `.env.example`. Only the Anthropic path uses the
+vault launcher.
 
 ## Running the sim
 
 Copy an example book, edit the cash/positions to the *simulated* book you
-want to test, then run against it:
+want to test, then run against it through the launcher:
 
 ```bash
 cp sim/portfolio.example.json sim/my_book.json
-tradingagents --ticker NVDA --date 2026-11-04 --portfolio sim/my_book.json --save
+.venv/bin/python sim/run.py --ticker NVDA --date 2026-11-04 --portfolio sim/my_book.json --save
 ```
 
 - An empty `positions` list is a flat book — different from omitting
@@ -75,8 +71,15 @@ tradingagents --ticker NVDA --date 2026-11-04 --portfolio sim/my_book.json --sav
 Backtest a grid without touching the live memory log:
 
 ```bash
-tradingagents backtest NVDA,AAPL --start 2026-06-01 --end 2026-08-01 --every 7
+.venv/bin/python sim/run.py backtest NVDA,AAPL --start 2026-06-01 --end 2026-08-01 --every 7
 ```
+
+First live proof (2026-11-05): NVDA as of 2026-11-04, flat US$25,000 book,
+analysts market/news/fundamentals — full pipeline completed, Portfolio
+Manager rated **Hold** (target 204.39), report + memory-log entry saved.
+Known gaps in that run, honestly flagged by the system itself: no
+FRED_API_KEY (macro data skipped) and Yahoo company-news timed out
+(news analyst worked from macro headlines and said so in its report).
 
 ## Files
 
