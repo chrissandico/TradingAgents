@@ -1,3 +1,5 @@
+from datetime import date
+
 from tradingagents.default_config import DEFAULT_CONFIG
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 
@@ -12,5 +14,5 @@ config = DEFAULT_CONFIG.copy()
 ta = TradingAgentsGraph(debug=True, config=config)
 
 # forward propagate
-_, decision = ta.propagate("NVDA", "2026-09-01")
+_, decision = ta.propagate("NVDA", date.today().isoformat())
 print(decision)
