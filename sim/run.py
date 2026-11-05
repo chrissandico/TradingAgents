@@ -44,6 +44,7 @@ sys.path.insert(0, "/opt/hatch/workflow-skills/custom-connector-setup/bin")
 import dynamic_credentials as dc
 
 CONNECTOR = "custom.anthropic-tradingagents"
+FRED_CONNECTOR = "custom.fred"
 
 DEFAULTS = {
     "TRADINGAGENTS_LLM_PROVIDER": "anthropic",
@@ -72,6 +73,14 @@ def _patch_anthropic_auth():
 def main(argv):
     entry = dc.dynamic_credential_entry(CONNECTOR)
     os.environ["ANTHROPIC_API_KEY"] = str(entry["surrogate"]).strip()
+    # FRED macro data: the vendor reads FRED_API_KEY and sends it as the
+    # api_key query param — exactly the registered placement for
+    # custom.fred, so the egress swap works the same way.
+    try:
+        fred = dc.dynamic_credential_entry(FRED_CONNECTOR)
+        os.environ["FRED_API_KEY"] = str(fred["surrogate"]).strip()
+    except Exception:
+        pass  # macro stays unconfigured; the vendor degrades honestly
     os.environ["no_proxy"] = "localhost,127.0.0.1"
     os.environ["NO_PROXY"] = "localhost,127.0.0.1"
     for key, value in DEFAULTS.items():
